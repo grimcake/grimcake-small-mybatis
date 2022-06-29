@@ -1,6 +1,10 @@
 package cn.grimcake.mybatis.test;
 
 import cn.grimcake.mybatis.binding.MapperProxyFactory;
+import cn.grimcake.mybatis.binding.MapperRegistry;
+import cn.grimcake.mybatis.session.SqlSession;
+import cn.grimcake.mybatis.session.SqlSessionFactory;
+import cn.grimcake.mybatis.session.defaults.DefaultSqlSessionFactory;
 import cn.grimcake.mybatis.test.dao.IUserDao;
 import com.alibaba.fastjson.JSON;
 import org.junit.Test;
@@ -16,13 +20,20 @@ public class ApiTest {
 
     @Test
     public void test_MapperProxyFactory() {
-        MapperProxyFactory<IUserDao> factory = new MapperProxyFactory<>(IUserDao.class);
-        Map<String, String> sqlSession = new HashMap<>();
-        sqlSession.put("cn.grimcake.mybatis.test.dao.IUserDao.queryUserName", "模拟查询用户名称");
+        // 1、注册Mapper
+        MapperRegistry registry = new MapperRegistry();
+        registry.addMappers("cn.grimcake.mybatis.test.dao");
 
-        IUserDao userDao = factory.newInstance(sqlSession);
-        String result = userDao.queryUserName("1");
-        logger.info("测试结果：{}", JSON.toJSONString(result));
+        // 2、从SqlSession工厂获取Session
+        SqlSessionFactory sqlSessionFactory = new DefaultSqlSessionFactory(registry);
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+
+        // 3、获取映射器对象
+        IUserDao userDao = sqlSession.getMapper(IUserDao.class);
+
+        // 4、测试验证
+        String res = userDao.queryUserName("10001");
+        logger.info("测试结果：{}", res);
     }
 
     @Test
